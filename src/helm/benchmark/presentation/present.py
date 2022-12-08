@@ -34,7 +34,6 @@ class AllRunner:
         auth: Authentication,
         conf_paths: List[str],
         url: str,
-        local: bool,
         local_path: str,
         output_path: str,
         suite: str,
@@ -53,7 +52,6 @@ class AllRunner:
         self.auth: Authentication = auth
         self.conf_paths: List[str] = conf_paths
         self.url: str = url
-        self.local: bool = local
         self.local_path: str = local_path
         self.output_path: str = output_path
         self.suite: str = suite
@@ -88,7 +86,6 @@ class AllRunner:
                     run_spec_descriptions=[entry.description],
                     auth=self.auth,
                     url=self.url,
-                    local=self.local,
                     local_path=self.local_path,
                     num_threads=self.num_threads,
                     output_path=self.output_path,
@@ -168,8 +165,8 @@ class AllRunner:
                 # Build arguments
                 present_args = []
                 present_args.append(f"--confs {' '.join(self.conf_paths)}")
-                if self.local:
-                    present_args.append("--local")
+                if self.url:
+                    present_args.append(f"--server-url {self.url}")
                 present_args.append(f"--num-threads {self.num_threads}")
                 present_args.append(f"--suite {self.suite}")
                 if self.max_eval_instances is not None:
@@ -185,7 +182,7 @@ class AllRunner:
                     f"{' '.join(present_args)}"
                 )
         lines.append("echo '# Run these after Slurm jobs terminate'")
-        lines.append(f"echo 'helm-run --local --suite {self.suite} --skip-instances'")
+        lines.append(f"echo 'helm-run --suite {self.suite} --skip-instances'")
         lines.append(f"echo 'helm-summarize --suite {self.suite}'")
         write_lines(os.path.join(suite_dir, "run-all.sh"), lines)
 
@@ -241,10 +238,9 @@ def main():
         # The benchmarking framework will not make any requests to the proxy server when
         # `skip_instances` is set, so a valid API key is not necessary.
         # Setting `local` will run and cache everything locally.
-        auth=Authentication("") if args.skip_instances or args.local else create_authentication(args),
+        auth=create_authentication(args) if args.server_url and not args.skip_instances else Authentication(""),
         conf_paths=args.conf_paths,
         url=args.server_url,
-        local=args.local,
         local_path=args.local_path,
         output_path=args.output_path,
         suite=args.suite,
