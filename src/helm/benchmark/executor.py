@@ -19,7 +19,7 @@ class ExecutorError(Exception):
 @dataclass(frozen=True)
 class ExecutionSpec:
     # If non-empty, URL of the proxy server we send requests to (e.g., http://localhost:1959).
-    url: str
+    url: Optional[str]
 
     # Pass into the service
     auth: Authentication
